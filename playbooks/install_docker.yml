@@ -1,0 +1,26 @@
+---
+- name: install docker
+  hosts: test
+
+  vars_files:
+  - ../group_vars/vars
+
+  tasks:
+#    - name: Update the apt package index
+#      shell: apt-get update
+    - name: Install dependencies
+      apt: name=apt-transport-https,ca-certificates,curl,software-properties-common  update_cache=yes
+    - name: Add Docker’s official GPG key using your customer Docker EE repository URL
+   #   shell: curl -fsSL "{{ docker_ee_url }}/ubuntu/gpg" | sudo apt-key add -
+      apt_key: 
+        url: '{{ docker_ee_url }}/ubuntu/gpg'
+        state: present
+    - name: set up the stable repository
+     # shell: add-apt-repository "deb [arch=amd64] {{docker_ee_url}}/ubuntu {{lsb_release -cs}} {{docker_version}}"
+      apt_repository:
+        repo: deb [arch=amd64] {{ docker_ee_url }}/ubuntu {{ lsb_release_cs }} {{ docker_version }}
+        state: present
+  #  - name: Update the apt package index.
+  #    shell: apt-get update
+    - name: install docker
+      apt: name=docker-ee update_cache=yes

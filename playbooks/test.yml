@@ -1,0 +1,13 @@
+---
+- name: install docker
+  hosts: docker
+  become_user: root
+  become: true
+
+  vars_files:
+  - ../group_vars/vars
+
+  tasks:
+    - name: Update the apt package index
+      apt: name=nginx update_cache=yes
+

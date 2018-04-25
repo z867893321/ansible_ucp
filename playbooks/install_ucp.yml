@@ -1,0 +1,21 @@
+---
+- hosts: docker
+  gather_facts: false
+  become_user: root
+  become: true
+ 
+  vars_files:
+    - ../group_vars/vars
+    - ../group_vars/valut
+  tasks:
+    - name: Check if node already belongs to the swarm
+      shell: docker info | grep "Swarm{{ ":" }} inactive" | wc -l
+      register: swarm_inactive
+    
+    - name: Copy the license
+      copy: src="{{ license_file }}" dest="/tmp/{{ license_file | basename }}"
+
+    - name: Install swarm leader and first UCP node
+      shell: docker run --rm --name ucp -v /var/run/docker.sock:/var/run/docker.sock docker/ucp:{{ ucp_version }} install --host-address 10.30.0.53 --admin-username={{ ucp_username }} --admin-password={{ ucp_password }} --license "$(cat /tmp/{{ license_file | basename }})" --san {{san_hostname}} 
+      register: output
+      when: swarm_inactive.stdout == "1"

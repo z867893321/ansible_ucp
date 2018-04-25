@@ -1,0 +1,8 @@
+docker_ee_url: 'https://storebits.docker.com/ee/ubuntu/sub-fcf2bd6e-c24d-4d84-9725-833bcfbdadb2'
+lsb_release_cs: 'xenial'
+docker_version: 'stable-17.06'
+ucp_version: 'latest'
+dtr_version: 'latest'
+license_file: '/root/ansible_docker/license.lic'
+ucp_username: 'hydsoft'
+san_hostname: 'hbyt'

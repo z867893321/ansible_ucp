@@ -1,0 +1,44 @@
+---
+- hosts: dtr
+  vars_files:
+    - ../group_vars/vars
+    - ../group_vars/valut
+  vars:
+    ucp_main: "{{ hostvars[groups['ucp_main'][0]].ip_addr }}"
+    dtr_main: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+  tasks:
+   # - name: test
+   #   local_action: copy content="token{{ ":" }} {{ inventory_hostname }}" dest=/tmp/test 
+    - name: Check if node already belongs to the swarm
+      shell: docker info | grep "Swarm{{':'}} inactive" | wc -l
+      register: swarm_inactive
+
+    - name: Get worker token
+      include_vars:
+        file: /tmp/worker_token
+        name: add_worker
+      when: inventory_hostname not in groups.ucp_manager and swarm_inactive.stdout == "1"
+
+    - name: Add Worker nodes to the swarm
+      command: "{{ add_worker.token }}"
+      when: inventory_hostname not in groups.ucp_manager and swarm_inactive.stdout == "1"
+
+    - name: install dtr
+      shell: docker run --rm docker/dtr:{{ dtr_version }} install  --ucp-node {{ inventory_hostname }} --ucp-insecure-tls --dtr-external-url https://{{ dtr_main }} --ucp-url https://{{ ucp_main }} --ucp-username {{ ucp_username }} --ucp-password {{ ucp_password }}
+      when: inventory_hostname in groups.dtr_main and swarm_inactive.stdout == "1"
+    
+    - name: Get replica ID
+      shell: docker ps --format "{{ '{{' }}.Names{{ '}}' }}" | grep dtr | awk -F'-' '{ print $NF }' | uniq
+      register: replica_id
+      when: inventory_hostname in groups.dtr_main
+      tags:
+         - replicas  
+    - name: Add DTR replicas
+      command: docker run --rm docker/dtr:{{ dtr_version }} join --ucp-node {{ inventory_hostname }} --ucp-url https://{{ ucp_main }} --ucp-username {{ ucp_username }} --ucp-password {{ ucp_password }} --ucp-insecure-tls --existing-replica-id {{ hostvars[dtr_main]['replica_id']['stdout'] }} 
+      register: task_result
+      until: task_result.rc == 0
+      retries: 20
+      delay: 60
+      when: inventory_hostname not in groups.dtr_main and swarm_inactive.stdout == "1"
+      tags: 
+        - add_dtr

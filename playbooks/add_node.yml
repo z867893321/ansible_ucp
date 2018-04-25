@@ -1,0 +1,26 @@
+---
+- hosts: ucp_node
+  tasks:
+    - name: Check if node already belongs to the swarm
+      shell: docker info | grep "Swarm{{':'}} inactive" | wc -l
+      register: swarm_inactive
+
+    - name: Get worker token
+      include_vars:
+        file: /tmp/worker_token
+        name: add_worker
+      when: inventory_hostname not in groups.ucp_manager and swarm_inactive.stdout == "1"
+
+    - name: Add Worker nodes to the swarm
+      command: "{{ add_worker.token }}"
+      when: inventory_hostname not in groups.ucp_manager and swarm_inactive.stdout == "1"
+    
+    - name: Get manager token
+      include_vars:
+        file: /tmp/manager_token
+        name: add_manager
+      when: inventory_hostname not in groups.ucp_worker and swarm_inactive.stdout == "1"
+  
+    - name: Add manager nodes to the swarm
+      command: "{{ add_manager.token }}"
+      when: inventory_hostname not in groups.ucp_worker and swarm_inactive.stdout == "1"

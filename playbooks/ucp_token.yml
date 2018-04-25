@@ -1,0 +1,18 @@
+---
+- hosts: docker
+  gather_facts: false
+  become_user: root
+  become: true
+  
+  tasks:
+    - name: Get swarm worker token
+      shell: echo `docker swarm join-token worker` | cut -f2 -d':' | sed 's|\\||g'
+      register: worker_token
+    - name: Get swarm manager token
+      shell: echo `docker swarm join-token manager` | cut -f2 -d':' | sed 's|\\||g'
+      register: manager_token
+    - name: Save manager token
+      local_action: copy content="token{{ ":" }} {{ hostvars[groups['docker'][0]]['manager_token']['stdout'] }}" dest=/tmp/manager_token 
+
+    - name: Save worker token
+      local_action: copy content="token{{ ":" }} {{ hostvars[groups['docker'][0]]['worker_token']['stdout'] }}" dest=/tmp/worker_token

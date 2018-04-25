@@ -1,0 +1,23 @@
+
+[docker]
+zmf-jumpbox ip_addr='10.30.0.53'
+
+
+[ucp_main]
+zmf-jumpbox ip_addr='10.30.0.53'
+[ucp_node]
+#10.30.0.58
+swarm-shilei-01 ip_addr='10.30.0.59'
+
+
+[ucp_worker]
+swarm-shilei-01 ip_addr='10.30.0.59'
+[ucp_manager]
+swarm-shilei-02 ip_addr='10.30.0.58'
+
+
+[dtr]
+swarm-shilei-01 ip_addr='10.30.0.59'
+[dtr_main]
+swarm-shilei-01 ip_addr='10.30.0.59'
+
